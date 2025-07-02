@@ -89,7 +89,7 @@ app.post('/api/contact', async (req, res) => {
     res.status(200).json({ message: "Message sent successfully" });
   } catch (err) {
     console.error("Contact Error:", err);
-    res.status(500).json({ message: "Database error", error: err });
+    res.status(500).json({ message: "Database error", errorrrr: err });
   }
 });
 
