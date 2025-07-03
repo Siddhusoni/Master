@@ -12,7 +12,7 @@ const cors = require('cors');
 const JWT_SECRET = 'soni#12@'; // Secure this in real apps
 const app = express();
 
-app.use(cors());
+app.use(cors({ origin: '*' }));
 app.use(express.json());
 
 // Routes
