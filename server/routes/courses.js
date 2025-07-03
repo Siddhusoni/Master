@@ -1,45 +1,57 @@
-// server.js or routes/courses.js
-
 const express = require("express");
-
 const router = express.Router();
-const db = require("../db"); // your MySQL connection
+const db = require("../db"); // PostgreSQL Pool
 
-
-// GET all courses
-router.get("/courses", (req, res) => {
-  db.query("SELECT * FROM courses", (err, results) => {
-    if (err) return res.status(500).send(err);
-    res.json(results);
-});         
+// 📦 GET all courses
+router.get("/courses", async (req, res) => {
+  try {
+    const result = await db.query("SELECT * FROM courses ORDER BY id DESC");
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Fetch courses error:", err);
+    res.status(500).json({ error: "Database error" });
+  }
 });
 
-// POST new course (for admin panel)
-router.post("/courses", (req, res) => { 
+// ➕ POST a new course
+router.post("/courses", async (req, res) => {
   const { title, price, image, duration } = req.body;
-  const sql = "INSERT INTO courses (title, price, image, duration) VALUES (?, ?, ?, ?)";
-  db.query(sql, [title, price, image, duration], (err, result) => {
-    if (err) return res.status(500).send(err);
-    res.json({ message: "Course added successfully", id: result.insertId });
-  });
+  try {
+    const result = await db.query(
+      "INSERT INTO courses (title, price, image, duration) VALUES ($1, $2, $3, $4) RETURNING id",
+      [title, price, image, duration]
+    );
+    res.json({ message: "Course added successfully", id: result.rows[0].id });
+  } catch (err) {
+    console.error("Insert course error:", err);
+    res.status(500).json({ error: "Failed to add course" });
+  }
 });
 
-// DELETE course
-router.delete("/courses/:id", (req, res) => {
-  const sql = "DELETE FROM courses WHERE id = ?";
-db.query(sql, [req.params.id], (err, result) =>{
-    if (err) return res.status(500).send(err);
+// 🗑 DELETE a course
+router.delete("/courses/:id", async (req, res) => {
+  try {
+    await db.query("DELETE FROM courses WHERE id = $1", [req.params.id]);
     res.json({ message: "Course deleted successfully" });
-  });
+  } catch (err) {
+    console.error("Delete course error:", err);
+    res.status(500).json({ error: "Failed to delete course" });
+  }
 });
 
-// UPDATE course
-router.put("/courses/:id", (req, res) => {
+// ✏️ UPDATE a course
+router.put("/courses/:id", async (req, res) => {
   const { title, price, image, duration } = req.body;
-  const sql = "UPDATE courses SET title=?, price=?, image=?, duration=? WHERE id=?";
-  db.query(sql, [title, price, image, duration, req.params.id], (err, result) => {
-    if (err) return res.status(500).send(err);
+  try {
+    await db.query(
+      "UPDATE courses SET title = $1, price = $2, image = $3, duration = $4 WHERE id = $5",
+      [title, price, image, duration, req.params.id]
+    );
     res.json({ message: "Course updated successfully" });
-  });
+  } catch (err) {
+    console.error("Update course error:", err);
+    res.status(500).json({ error: "Failed to update course" });
+  }
 });
+
 module.exports = router;
