@@ -1,9 +1,8 @@
-// routes/courses.js
 const express = require("express");
 const router = express.Router();
 const db = require("../db"); // PostgreSQL pool
 
-// ✅ GET /api/courses
+// 📥 GET all courses
 router.get("/", async (req, res) => {
   try {
     const result = await db.query("SELECT * FROM courses ORDER BY id DESC");
@@ -14,7 +13,7 @@ router.get("/", async (req, res) => {
   }
 });
 
-// ✅ POST /api/courses
+// ➕ Add course
 router.post("/", async (req, res) => {
   const { title, price, image, duration } = req.body;
   try {
@@ -26,6 +25,33 @@ router.post("/", async (req, res) => {
   } catch (err) {
     console.error("Insert course error:", err);
     res.status(500).json({ error: "Failed to add course" });
+  }
+});
+
+// ✏️ Update course
+router.put("/:id", async (req, res) => {
+  const { id } = req.params;
+  const { title, price, image, duration } = req.body;
+  try {
+    await db.query(
+      "UPDATE courses SET title = $1, price = $2, image = $3, duration = $4 WHERE id = $5",
+      [title, price, image, duration, id]
+    );
+    res.json({ message: "Course updated successfully" });
+  } catch (err) {
+    console.error("Update course error:", err);
+    res.status(500).json({ error: "Failed to update course" });
+  }
+});
+
+// 🗑️ Delete course
+router.delete("/:id", async (req, res) => {
+  try {
+    await db.query("DELETE FROM courses WHERE id = $1", [req.params.id]);
+    res.json({ message: "Course deleted successfully" });
+  } catch (err) {
+    console.error("Delete course error:", err);
+    res.status(500).json({ error: "Failed to delete course" });
   }
 });
 
